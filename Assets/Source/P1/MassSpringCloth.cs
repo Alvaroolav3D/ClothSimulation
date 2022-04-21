@@ -158,7 +158,9 @@ public class MassSpringCloth : MonoBehaviour
 
     public List<Fixer> fixers; //lista de fixer que afectan a la tela
     public List<Wind> winds; //lista de vientos que afectan a la tela
-    public List<GameObject> collisions; //lista de objetos con los que la tela colisiona
+
+    public List<GameObject> spheres; //lista de las esferas con los que la tela colisiona
+    public List<GameObject> cubes; //lista de los cubos con los que la tela colisiona
     #endregion
 
     public void Start()
@@ -316,7 +318,8 @@ public class MassSpringCloth : MonoBehaviour
     private void stepSymplectic()
     {
         computeWind();
-        computeColisions();
+        computeSphereColisions();
+        //computeCubeColisions();
 
         //Para cada nodo establezco la masa y el damping en tiempo real y calculo la fuerza correspondiente
         foreach (Node node in nodes)
@@ -346,10 +349,10 @@ public class MassSpringCloth : MonoBehaviour
                     node.vel += TimeStep / node.mass * node.force;
                     node.pos += TimeStep * node.vel;
                 }
-                if (node.isColliding)
+                else if (node.isColliding)
                 {
-                    node.vel = TimeStep / node.mass * -node.force;
-                    node.pos += TimeStep * node.vel;
+                    //node.vel = TimeStep / node.mass * -node.force;
+                    //node.pos += TimeStep * node.vel;
                 }
             }
         }
@@ -396,23 +399,68 @@ public class MassSpringCloth : MonoBehaviour
             nodes[triangles[i + 2]].windforce = windForce / 3;
         }
     }
-    public void computeColisions()
+
+    #region FUNCIONES PARA EL CALCULO DE COLISIONES CON OTROS GAMEOBJECTS
+
+    public void computeCubeColisions()
     {
-        foreach(Node node in nodes)
+        //Para cada nodo compruebo si esta colisionando con un cubo
+        foreach (Node node in nodes)
         {
-            foreach (GameObject colision in collisions)
+            foreach (GameObject cube in cubes)
             {
-                Bounds bounds = colision.GetComponent<Collider>().bounds; //almaceno los limites del collider del objeto
-                
-                if (bounds.Contains(node.pos))
-                {
-                    node.isColliding = true;
-                }
-                else
-                {
-                    node.isColliding = false;
-                }
+                //forma de hacerlo con la clase Bounds de Unity
+                //Bounds cubeBounds = cube.GetComponent<Collider>().bounds; //almaceno los limites del collider del objeto
+                //node.isColliding = cubeBounds.Contains(node.pos);
+
+                //compruebo la posicion futura para que el resultado sea mas bonito
+                var vel = node.vel + TimeStep / node.mass * node.force;
+                var pos = node.pos + TimeStep * vel;
+
+                node.isColliding = isPointInsideCube(pos, cube);
             }
         }
     }
+    public void computeSphereColisions()
+    {
+        //Para cada nodo compruebo si esta colisionando con una esfera
+        foreach(Node node in nodes)
+        {
+            foreach(GameObject sphere in spheres)
+            {
+                //compruebo la posicion futura para que el resultado sea mas bonito
+                var vel = node.vel + TimeStep / node.mass * node.force;
+                var pos = node.pos + TimeStep * vel;
+
+                node.isColliding = isPointInsideSphere(pos, sphere);
+            }
+        }
+    }
+    public bool isPointInsideSphere(Vector3 position, GameObject sphere)
+    {
+        //Si la distancia entre el nodo y el centro de la esfera es menor que el radio eso significa que se encuentra dentro y por tanto hay contacto
+        var distance = Math.Sqrt((position.x - sphere.transform.position.x) * (position.x - sphere.transform.position.x) +
+                                 (position.y - sphere.transform.position.y) * (position.y - sphere.transform.position.y) +
+                                 (position.z - sphere.transform.position.z) * (position.z - sphere.transform.position.z));
+        float radius = sphere.GetComponent<SphereCollider>().radius * sphere.transform.localScale.x;
+        return distance <= radius;
+    }
+    public bool isPointInsideCube(Vector3 position, GameObject cube)
+    {
+        //Si la posicion dada se encuentra dentro de los limites del cubo con la formula de AABB
+        var minX = cube.transform.position.x - 0.5 * cube.transform.localScale.x;
+        var maxX = cube.transform.position.x + 0.5 * cube.transform.localScale.x;
+
+        var minY = cube.transform.position.y - 0.5 * cube.transform.localScale.y;
+        var maxY = cube.transform.position.y + 0.5 * cube.transform.localScale.y;
+
+        var minZ = cube.transform.position.z - 0.5 * cube.transform.localScale.z;
+        var maxZ = cube.transform.position.z + 0.5 * cube.transform.localScale.z;
+
+        return (position.x >= minX && position.x <= maxX) &&
+               (position.y >= minY && position.y <= maxY) &&
+               (position.z >= minZ && position.z <= maxZ);
+    }
+
+    #endregion
 }

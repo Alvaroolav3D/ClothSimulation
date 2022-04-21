@@ -406,7 +406,7 @@ MonoBehaviour:
   Substeps: 5
   Gravity: {x: 0, y: -9.81, z: 0}
   nodeMass: 0.08
-  nodeDamping: 0.05
+  nodeDamping: 0.1
   springStiffnessTraccion: 1
   springStiffnessFlexion: 3
   springDamping: 0.001
@@ -416,8 +416,9 @@ MonoBehaviour:
   winds:
   - {fileID: 8377945}
   - {fileID: 1378257402}
-  collisions:
+  spheres:
   - {fileID: 742692879}
+  cubes: []
 --- !u!23 &591120312
 MeshRenderer:
   m_ObjectHideFlags: 0
