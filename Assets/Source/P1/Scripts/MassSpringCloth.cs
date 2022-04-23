@@ -318,8 +318,8 @@ public class MassSpringCloth : MonoBehaviour
     private void stepSymplectic()
     {
         computeWind();
-        //computeSphereColisions();
-        computeCubeColisions();
+        computeSphereColisions();
+        //computeCubeColisions();
 
         //Para cada nodo establezco la masa y el damping en tiempo real y calculo la fuerza correspondiente
         foreach (Node node in nodes)
